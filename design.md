@@ -280,9 +280,9 @@ web:
     - python
     - -m
     - daily_vulns_agent.cli
-    - run
     - --config
     - "{config_path}"
+    - run
 
 schedule:
   enabled: true

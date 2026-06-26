@@ -46,10 +46,11 @@ cp config.example.yaml config.yaml
 PYTHONPATH=src uv run python -m daily_vulns_agent.cli <command>
 ```
 
-如果要使用其他配置文件，再显式传 `--config`：
+如果要使用其他配置文件，可以显式传 `--config`。全局参数放在子命令前后都支持，推荐放在子命令前：
 
 ```bash
 PYTHONPATH=src uv run python -m daily_vulns_agent.cli --config path/to/config.yaml <command>
+PYTHONPATH=src uv run python -m daily_vulns_agent.cli <command> --config path/to/config.yaml
 ```
 
 ## CLI 命令

@@ -493,21 +493,29 @@ def cmd_run(config: AppConfig) -> None:
         raise
 
 
+def add_config_argument(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--config", default=argparse.SUPPRESS, help="Path to config.yaml")
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="daily-vulns")
     parser.add_argument("--config", default="config.yaml", help="Path to config.yaml")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    subparsers.add_parser("generate", help="Generate report artifacts with configured model CLI")
+    generate_parser = subparsers.add_parser("generate", help="Generate report artifacts with configured model CLI")
+    add_config_argument(generate_parser)
 
     publish_parser = subparsers.add_parser("publish", help="Render and publish a generated report")
+    add_config_argument(publish_parser)
     publish_parser.add_argument("--run-dir", required=True, help="Run directory to publish")
 
     notify_parser = subparsers.add_parser("notify", help="Send DingTalk notification for a published report")
+    add_config_argument(notify_parser)
     notify_parser.add_argument("--run-dir", required=True, help="Run directory to notify")
     notify_parser.add_argument("--force-notify", action="store_true", help="Send again even if notify.json is success")
 
-    subparsers.add_parser("run", help="Run generate, publish and notify")
+    run_parser = subparsers.add_parser("run", help="Run generate, publish and notify")
+    add_config_argument(run_parser)
     return parser
 
 
