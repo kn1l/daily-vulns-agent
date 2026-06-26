@@ -1,4 +1,5 @@
 config.yaml
+skills/daily-vulns/config.yaml
 runs/
 .venv/
 state/
