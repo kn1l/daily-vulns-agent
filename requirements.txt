@@ -1,0 +1,8 @@
+PyYAML
+markdown-it-py
+requests
+fastapi
+uvicorn
+jinja2
+apscheduler
+itsdangerous

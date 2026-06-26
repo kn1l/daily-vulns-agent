@@ -1,0 +1,13 @@
+{% extends "admin/base.html" %}
+{% block content %}
+<h1>调度配置</h1>
+<p class="subtitle">配置每天自动生成并推送漏洞日报的时间点。</p>
+<form method="post" action="{{ admin_prefix }}/schedule">
+  <label><input type="checkbox" name="enabled" value="1" {% if schedule.enabled %}checked{% endif %}> 启用定时任务</label>
+  <label for="timezone">时区</label>
+  <input id="timezone" name="timezone" value="{{ schedule.timezone }}" required>
+  <label for="times">每日时间点，每行一个 HH:MM</label>
+  <textarea id="times" name="times" rows="6" required>{{ schedule.times | join("\n") }}</textarea>
+  <button type="submit">保存并重载</button>
+</form>
+{% endblock %}

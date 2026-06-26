@@ -1,0 +1,1 @@
+"""Daily vulnerabilities agent."""

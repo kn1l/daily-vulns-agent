@@ -1,0 +1,63 @@
+{% extends "admin/base.html" %}
+{% block content %}
+<h1>基础配置</h1>
+<p class="subtitle">配置公开站点 URL、钉钉机器人和默认生成 agent。</p>
+<form method="post" action="{{ admin_prefix }}/settings">
+  <label for="site_base_url">站点根 URL</label>
+  <input id="site_base_url" name="site_base_url" value="{{ publish.site_base_url }}" required>
+
+  <label for="webhook">钉钉 webhook</label>
+  <input id="webhook" name="webhook" value="{{ dingtalk.webhook }}">
+
+  <label for="secret">钉钉 secret</label>
+  <input id="secret" name="secret" type="password" value="{{ dingtalk.secret_mask }}" placeholder="留空则不设置">
+
+  <label for="agent">默认 agent</label>
+  <select id="agent" name="agent" required>
+    <option value="claude" {% if generation.agent == "claude" %}selected{% endif %}>claude</option>
+    <option value="codex" {% if generation.agent == "codex" %}selected{% endif %}>codex</option>
+  </select>
+
+  <section class="agent-config" data-agent-config="claude">
+    <label for="claude_base_url">Claude Base URL</label>
+    <input id="claude_base_url" name="claude_base_url" value="{{ generation.claude_base_url }}" placeholder="留空使用 CLI 默认值">
+
+    <label for="claude_api_key">Claude API Key</label>
+    <input id="claude_api_key" name="claude_api_key" type="password" value="{{ generation.claude_api_key_mask }}" placeholder="留空则不设置">
+
+    <label for="claude_model">Claude 模型名</label>
+    <input id="claude_model" name="claude_model" value="{{ generation.claude_model }}" placeholder="留空使用 CLI 默认模型">
+
+    <label for="claude_command_template">Claude command_template，每行一个参数</label>
+    <textarea id="claude_command_template" name="claude_command_template" rows="5">{{ generation.claude_command_template }}</textarea>
+  </section>
+
+  <section class="agent-config" data-agent-config="codex">
+    <label for="codex_base_url">Codex Base URL</label>
+    <input id="codex_base_url" name="codex_base_url" value="{{ generation.codex_base_url }}" placeholder="留空使用 CLI 默认值">
+
+    <label for="codex_api_key">Codex API Key</label>
+    <input id="codex_api_key" name="codex_api_key" type="password" value="{{ generation.codex_api_key_mask }}" placeholder="留空则不设置">
+
+    <label for="codex_model">Codex 模型名</label>
+    <input id="codex_model" name="codex_model" value="{{ generation.codex_model }}" placeholder="留空使用 CLI 默认模型">
+
+    <label for="codex_command_template">Codex command_template，每行一个参数</label>
+    <textarea id="codex_command_template" name="codex_command_template" rows="5">{{ generation.codex_command_template }}</textarea>
+  </section>
+
+  <p class="muted">prompt_file、管理员密码请手工修改 config.yaml。命令模板支持 {prompt}、{output_dir}、{config_path}、{base_url}、{model}；API Key 会注入环境变量，不会回显。</p>
+  <button type="submit">保存配置</button>
+</form>
+<script>
+  const agentSelect = document.querySelector('#agent');
+  const agentConfigs = document.querySelectorAll('[data-agent-config]');
+  function syncAgentConfig() {
+    agentConfigs.forEach((item) => {
+      item.hidden = item.dataset.agentConfig !== agentSelect.value;
+    });
+  }
+  agentSelect.addEventListener('change', syncAgentConfig);
+  syncAgentConfig();
+</script>
+{% endblock %}

@@ -1,0 +1,27 @@
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    environment:
+      DAILY_VULNS_CONFIG: /app/config.yaml
+      PYTHONPATH: /app/src
+    volumes:
+      - ./config.yaml:/app/config.yaml:rw
+      - ./prompts:/app/prompts:rw
+      - ./skills:/app/skills:rw
+      - ./runs:/app/runs:rw
+      - ./public:/app/public:rw
+      - ./state:/app/state:rw
+    expose:
+      - "8000"
+
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    depends_on:
+      - app
+    ports:
+      - "8080:80"
+    volumes:
+      - ./deploy/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./public:/usr/share/nginx/html:ro

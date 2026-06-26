@@ -1,0 +1,51 @@
+generation:
+  agent: claude
+  prompt_file: prompts/daily_report.md
+  agents:
+    claude:
+      base_url: ""
+      api_key: ""
+      model: ""
+      command_template:
+        - claude
+        - --print
+        - "{prompt}"
+        - --dangerously-skip-permissions
+    codex:
+      base_url: ""
+      api_key: ""
+      model: ""
+      command_template:
+        - codex
+        - exec
+        - "{prompt}"
+        - --dangerously-bypass-approvals-and-sandbox
+
+publish:
+  site_base_url: "http://localhost:8080"
+  runs_dir: runs
+  public_dir: public
+  reports_path: /reports
+
+dingtalk:
+  webhook: ""
+  secret: ""
+
+web:
+  admin:
+    username: admin
+    password: change-me
+    session_secret: change-me-session-secret
+  run_command:
+    - python
+    - -m
+    - daily_vulns_agent.cli
+    - run
+    - --config
+    - "{config_path}"
+
+schedule:
+  enabled: true
+  timezone: Asia/Shanghai
+  times:
+    - "09:00"

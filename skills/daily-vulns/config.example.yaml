@@ -1,0 +1,33 @@
+script_sources:
+  - name: nvd
+    command: uv run ${CLAUDE_SKILL_DIR}/scripts/nvd.py --start {start} --end {end}
+  - name: ghsa
+    command: uv run ${CLAUDE_SKILL_DIR}/scripts/ghsa.py --start {start} --end {end}
+
+source_configs:
+  ghsa:
+    token: ""
+    timeout: 30
+
+ranking_rules:
+  - effect: strong_boost
+    rule: 高使用量、关键生态位置、广泛下游依赖、主流框架、基础库、云原生核心组件、CI/CD 核心链路、边界入口、默认暴露、管理面、认证系统或网关类组件时，明显提权
+
+  - effect: boost
+    rule: 漏洞后果可导致远程代码执行、认证绕过、权限提升、沙箱逃逸、敏感凭据泄露、SQL 注入或任意文件读写删除时，提权
+
+  - effect: slight_boost
+    rule: GitHub stars、包下载量、下游依赖或生态位置显示使用量较高时，轻微提权
+
+  - effect: demote
+    rule: 仅涉及 demo、lab、sample、test 或非生产环境时，降权
+
+  - effect: strong_demote
+    rule: 时间不明确、严重度缺失、影响面无法确认或信息明显不完整时，明显降权
+
+project_filters:
+  min_github_stars: 1000
+
+reporting:
+  high_value_threshold: 70
+  watch_threshold: 45

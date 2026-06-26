@@ -1,0 +1,260 @@
+:root {
+  color-scheme: light;
+  --bg: #eef3ff;
+  --panel: #ffffff;
+  --panel-soft: #f8fafc;
+  --text: #172033;
+  --muted: #667085;
+  --border: #e4e7ec;
+  --primary: #2563eb;
+  --primary-soft: #eff6ff;
+  --primary-line: #bfdbfe;
+  --warning: #b54708;
+  --success: #027a48;
+  --failed: #b42318;
+  --shadow: 0 22px 60px rgba(15, 23, 42, 0.12);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top left, rgba(37, 99, 235, 0.20), transparent 34rem),
+    linear-gradient(180deg, #f8fbff 0%, var(--bg) 100%);
+  color: var(--text);
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  line-height: 1.75;
+}
+
+main {
+  width: min(980px, calc(100% - 32px));
+  margin: 40px auto 64px;
+  padding: 42px;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(37, 99, 235, 0.12);
+  border-radius: 28px;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(12px);
+}
+
+a {
+  color: var(--primary);
+  font-weight: 700;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(37, 99, 235, 0.25);
+}
+
+a:hover {
+  border-bottom-color: currentColor;
+}
+
+h1, h2, h3 {
+  line-height: 1.25;
+  letter-spacing: -0.035em;
+}
+
+h1 {
+  position: relative;
+  margin: 0 0 28px;
+  padding-bottom: 18px;
+  font-size: clamp(30px, 4vw, 46px);
+  border-bottom: 1px solid var(--border);
+}
+
+h1::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -1px;
+  width: 88px;
+  height: 3px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--primary), #7c3aed);
+}
+
+h2 {
+  margin: 34px 0 18px;
+  padding: 16px 18px;
+  background: linear-gradient(135deg, #eff6ff, #f8fafc);
+  border: 1px solid var(--primary-line);
+  border-left: 5px solid var(--primary);
+  border-radius: 18px;
+  color: #1e3a8a;
+  font-size: 24px;
+  box-shadow: 0 10px 24px rgba(37, 99, 235, 0.08);
+}
+
+h3 {
+  margin: 28px 0 12px;
+  padding-left: 12px;
+  border-left: 4px solid #93c5fd;
+  color: #1f2937;
+  font-size: 20px;
+}
+
+p {
+  margin: 0 0 18px;
+}
+
+p, li {
+  color: #344054;
+}
+
+ul, ol {
+  margin: 0 0 22px;
+  padding: 14px 18px 14px 34px;
+  background: #fbfdff;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+}
+
+li + li {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed #d8dee8;
+}
+
+li::marker {
+  color: var(--primary);
+  font-weight: 800;
+}
+
+pre, code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+pre {
+  overflow-x: auto;
+  margin: 20px 0;
+  padding: 20px;
+  background: #0f172a;
+  color: #e2e8f0;
+  border-radius: 18px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+code {
+  padding: 0.2em 0.46em;
+  background: var(--primary-soft);
+  color: #1e40af;
+  border: 1px solid #dbeafe;
+  border-radius: 8px;
+  font-size: 0.92em;
+}
+
+pre code {
+  padding: 0;
+  background: transparent;
+  border: 0;
+  color: inherit;
+}
+
+blockquote {
+  margin: 20px 0;
+  padding: 16px 18px;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-left: 5px solid #f59e0b;
+  border-radius: 16px;
+  color: #713f12;
+}
+
+table {
+  width: 100%;
+  margin: 24px 0;
+  overflow: hidden;
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid #d7e3f8;
+  border-radius: 18px;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.06);
+}
+
+th, td {
+  padding: 14px 16px;
+  border-bottom: 1px solid #e7edf7;
+  text-align: left;
+  vertical-align: top;
+}
+
+th {
+  background: #eff6ff;
+  color: #1e3a8a;
+  font-size: 13px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+td {
+  background: #ffffff;
+}
+
+tr:nth-child(even) td {
+  background: #f8fbff;
+}
+
+tr:last-child td,
+tr:last-child th {
+  border-bottom: 0;
+}
+
+hr {
+  margin: 34px 0;
+  border: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border), transparent);
+}
+
+.status-pending,
+.status-success,
+.status-failed {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.status-pending {
+  background: #fffaeb;
+  color: var(--warning);
+}
+
+.status-success {
+  background: #ecfdf3;
+  color: var(--success);
+}
+
+.status-failed {
+  background: #fef3f2;
+  color: var(--failed);
+}
+
+@media (max-width: 720px) {
+  main {
+    width: min(100% - 20px, 980px);
+    margin: 16px auto 32px;
+    padding: 22px;
+    border-radius: 20px;
+  }
+
+  h2 {
+    padding: 14px;
+    font-size: 21px;
+  }
+
+  ul, ol {
+    padding-left: 28px;
+  }
+
+  table {
+    display: block;
+    overflow-x: auto;
+  }
+}

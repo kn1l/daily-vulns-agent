@@ -1,0 +1,15 @@
+{% extends "admin/base.html" %}
+{% block content %}
+<h1>钉钉配置</h1>
+<p class="subtitle">配置钉钉机器人 webhook 和签名 secret。</p>
+<form method="post" action="{{ admin_prefix }}/settings/dingtalk">
+  <label for="webhook">钉钉 webhook</label>
+  <input id="webhook" name="webhook" value="{{ dingtalk.webhook }}">
+
+  <label for="secret">钉钉 secret</label>
+  <input id="secret" name="secret" type="password" value="{{ dingtalk.secret_mask }}" placeholder="留空则不设置">
+
+  <p class="muted">已有 secret 在响应中替换为等长 * 掩码；保持原掩码不变会保留旧值，改成其他内容则覆盖。</p>
+  <button type="submit">保存钉钉配置</button>
+</form>
+{% endblock %}

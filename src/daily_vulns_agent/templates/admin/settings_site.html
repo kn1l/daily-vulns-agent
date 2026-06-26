@@ -1,0 +1,11 @@
+{% extends "admin/base.html" %}
+{% block content %}
+<h1>站点配置</h1>
+<p class="subtitle">配置公开报告站点的对外访问地址。</p>
+<form method="post" action="{{ admin_prefix }}/settings/site">
+  <label for="site_base_url">站点根 URL</label>
+  <input id="site_base_url" name="site_base_url" value="{{ publish.site_base_url }}" required>
+
+  <button type="submit">保存站点配置</button>
+</form>
+{% endblock %}
