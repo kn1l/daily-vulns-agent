@@ -36,6 +36,7 @@ def create_app() -> FastAPI:
     @app.on_event("startup")
     def startup() -> None:
         state.reload_config()
+        state.init_runtime_paths()
         state.reload_scheduler()
 
     @app.on_event("shutdown")
@@ -68,6 +69,12 @@ class WebState:
 
     def reload_config(self) -> None:
         self.config = load_config(self.config_path)
+
+    def init_runtime_paths(self) -> None:
+        self.config.runs_dir.mkdir(parents=True, exist_ok=True)
+        self.scheduler_runs_dir.mkdir(parents=True, exist_ok=True)
+        (self.config.public_dir / "reports").mkdir(parents=True, exist_ok=True)
+        (self.config.public_dir / "assets").mkdir(parents=True, exist_ok=True)
 
     def shutdown(self) -> None:
         self.scheduler.shutdown(wait=False)

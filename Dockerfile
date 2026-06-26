@@ -19,8 +19,6 @@ RUN useradd --create-home --shell /usr/sbin/nologin appuser \
     && mkdir -p /app/runs /app/public /app/state \
     && chown -R appuser:appuser /app
 
-USER appuser
-
 EXPOSE 8000
 
-CMD ["uvicorn", "daily_vulns_agent.web:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["sh", "-c", "mkdir -p /app/state/scheduler_runs /app/runs /app/public/reports /app/public/assets && exec uvicorn daily_vulns_agent.web:app --host 0.0.0.0 --port 8000"]

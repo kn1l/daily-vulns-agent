@@ -132,6 +132,9 @@ CLI 使用 `argparse`。
 - 调用 `generation.agent` 选中的 `generation.agents.<agent>.command_template` argv 模板。
 - `base_url`、`model` 可作为模板变量使用，并注入子进程环境变量。
 - `api_key` 只注入子进程环境变量，不写入命令行。
+- Codex agent 如果配置了 `base_url`、`api_key` 或 `model`，自动在 `{prompt}` 前追加 Codex 官方覆盖参数：`--ignore-user-config`、`--model <model>`，以及基于自定义 provider `daily_vulns_openai` 的 `-c model_provider="daily_vulns_openai"`、`-c model_providers.daily_vulns_openai.base_url="<base_url>"`、`-c model_providers.daily_vulns_openai.env_key="OPENAI_API_KEY"`，避免宿主机 `~/.codex/config.toml` 覆盖项目配置，也避免覆盖 Codex 内置 provider。
+- 子进程 stdin 使用 `DEVNULL`，避免模型 CLI 自动更新、登录过期或交互确认时等待人工输入。
+- `generation.timeout_seconds` 控制生成超时，默认 3600 秒；超时写入 `run.log` 并让命令失败。
 - 捕获 Claude/Codex stdout/stderr 到 `run.log`。
 - 终端只输出简洁状态。
 
@@ -238,6 +241,7 @@ CLI 使用 `argparse`。
 generation:
   agent: claude
   prompt_file: prompts/daily_report.md
+  timeout_seconds: 3600
   agents:
     claude:
       base_url: ""
@@ -254,6 +258,7 @@ generation:
       command_template:
         - codex
         - exec
+        - --dangerously-bypass-approvals-and-sandbox
         - "{prompt}"
 
 publish:
@@ -365,7 +370,7 @@ state/scheduler_runs/<timestamp>.log
 
 服务：
 
-- `app`：FastAPI + APScheduler，运行 `daily_vulns_agent.web:app`。
+- `app`：FastAPI + APScheduler，运行 `daily_vulns_agent.web:app`，启动时自动初始化 `state/`、`state/scheduler_runs/`、`runs/`、`public/reports/` 和 `public/assets/`。
 - `nginx`：对外提供静态报告和反代管理后台。
 
 对外路径：
@@ -382,6 +387,8 @@ state/scheduler_runs/<timestamp>.log
 - `./runs:/app/runs`
 - `./public:/app/public`
 - `./state:/app/state`
+
+`runs/`、`public/`、`state/` 是运行产物目录，可以写入 `.gitignore`；应用和容器启动命令会自动创建所需子目录。
 
 宿主机 CLI、容器内 CLI、FastAPI Web 调度读写同一批挂载目录。`config.yaml` 中的相对路径在宿主机相对于项目根目录解析，在容器内相对于 `/app` 解析；由于挂载结构一致，两者兼容。
 

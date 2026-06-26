@@ -1,6 +1,7 @@
 generation:
   agent: claude
   prompt_file: prompts/daily_report.md
+  timeout_seconds: 3600
   agents:
     claude:
       base_url: ""
@@ -18,8 +19,8 @@ generation:
       command_template:
         - codex
         - exec
-        - "{prompt}"
         - --dangerously-bypass-approvals-and-sandbox
+        - "{prompt}"
 
 publish:
   site_base_url: "http://localhost:8080"

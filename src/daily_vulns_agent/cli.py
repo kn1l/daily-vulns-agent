@@ -90,6 +90,52 @@ def generation_command_env(agent: str, agent_config: dict[str, Any]) -> dict[str
     return env
 
 
+def toml_string(value: str) -> str:
+    return '"' + value.replace("\\", "\\\\").replace('"', '\\"') + '"'
+
+
+def codex_config_override_args(agent_config: dict[str, Any]) -> list[str]:
+    base_url = agent_string(agent_config, "base_url")
+    model = agent_string(agent_config, "model")
+    api_key = agent_string(agent_config, "api_key")
+    if not any((base_url, model, api_key)):
+        return []
+
+    args = ["--ignore-user-config"]
+    if model:
+        args.extend(["--model", model])
+    if base_url:
+        provider = "daily_vulns_openai"
+        args.extend(["-c", f"model_provider={toml_string(provider)}"])
+        args.extend(["-c", f"model_providers.{provider}.name={toml_string('Daily Vulns OpenAI')}"])
+        args.extend(["-c", f"model_providers.{provider}.base_url={toml_string(base_url)}"])
+        args.extend(["-c", f"model_providers.{provider}.env_key={toml_string('OPENAI_API_KEY')}"])
+        args.extend(["-c", f"model_providers.{provider}.wire_api={toml_string('responses')}"])
+    return args
+
+
+def apply_codex_config_overrides(command: list[str], prompt: str, agent_config: dict[str, Any]) -> list[str]:
+    override_args = codex_config_override_args(agent_config)
+    if not override_args:
+        return command
+    try:
+        prompt_index = command.index(prompt)
+    except ValueError:
+        return [*command, *override_args]
+    return [*command[:prompt_index], *override_args, *command[prompt_index:]]
+
+
+def generation_timeout_seconds(config: AppConfig) -> int:
+    value = config.data["generation"].get("timeout_seconds", 3600)
+    try:
+        timeout = int(value)
+    except (TypeError, ValueError) as exc:
+        raise AgentError("generation.timeout_seconds must be an integer") from exc
+    if timeout <= 0:
+        raise AgentError("generation.timeout_seconds must be greater than 0")
+    return timeout
+
+
 def generation_prompt(config: AppConfig) -> str:
     generation = config.data["generation"]
     prompt_file = resolve_config_path(config, generation["prompt_file"])
@@ -128,14 +174,35 @@ def cmd_generate(config: AppConfig) -> Path:
         "model": agent_string(agent_config, "model"),
     }
     command = [item.format(**template_vars) for item in command_template]
+    if agent == "codex":
+        command = apply_codex_config_overrides(command, prompt, agent_config)
     env = generation_command_env(agent, agent_config)
     env["CLAUDE_SKILL_DIR"] = str(skill_dir)
+
+    timeout_seconds = generation_timeout_seconds(config)
 
     log_path = run_dir / "run.log"
     print(f"generate: running {agent} command in {run_dir}")
     with log_path.open("w", encoding="utf-8") as log:
         log.write(f"$ {' '.join(command)}\n\n")
-        result = subprocess.run(command, cwd=run_dir, env=env, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        try:
+            result = subprocess.run(
+                command,
+                cwd=run_dir,
+                env=env,
+                text=True,
+                stdin=subprocess.DEVNULL,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                timeout=timeout_seconds,
+            )
+        except subprocess.TimeoutExpired as exc:
+            output = exc.stdout or ""
+            if isinstance(output, bytes):
+                output = output.decode("utf-8", errors="replace")
+            log.write(output)
+            log.write(f"\ntimeout_seconds={timeout_seconds}\n")
+            raise AgentError(f"generate timed out after {timeout_seconds} seconds, see log: {log_path}") from exc
         log.write(result.stdout or "")
         log.write(f"\nexit_code={result.returncode}\n")
     if result.returncode != 0:
