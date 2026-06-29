@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import shutil
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from typing import Any
 from urllib.parse import urljoin
@@ -88,6 +88,9 @@ def copy_file(src: Path, dst: Path) -> None:
     shutil.copy2(src, dst)
 
 
+UTC8 = timezone(timedelta(hours=8))
+
+
 def parse_iso8601(value: Any, field: str) -> datetime:
     if not isinstance(value, str) or not value.strip():
         raise AgentError(f"{field} must be a non-empty ISO 8601 string")
@@ -98,8 +101,15 @@ def parse_iso8601(value: Any, field: str) -> datetime:
         raise AgentError(f"{field} must be ISO 8601: {value}") from exc
 
 
+def format_utc8(value: Any) -> str:
+    dt = parse_iso8601(value, "time")
+    if dt.tzinfo is None:
+        dt = dt.astimezone()
+    return dt.astimezone(UTC8).strftime("%Y-%m-%d %H:%M:%S UTC+8")
+
+
 def now_iso() -> str:
-    return datetime.now().astimezone().isoformat(timespec="seconds")
+    return datetime.now(UTC8).isoformat(timespec="seconds")
 
 
 def run_name_from_dir(run_dir: Path) -> str:

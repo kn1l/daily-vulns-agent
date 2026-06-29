@@ -17,23 +17,44 @@
   </section>
   <section class="stat">
     <div class="stat-label">下次运行</div>
-    <div class="stat-value">{{ scheduler_state.next_runs | join(", ") if scheduler_state.next_runs else "-" }}</div>
+    <div class="stat-value">{{ scheduler_state.next_runs_display | default(scheduler_state.next_runs) | join(", ") if (scheduler_state.next_runs_display | default(scheduler_state.next_runs)) else "-" }}</div>
   </section>
   <section class="stat">
     <div class="stat-label">最近运行</div>
-    <div class="stat-value">{{ scheduler_state.last_run.finished_at if scheduler_state.last_run else "-" }}</div>
+    <div class="stat-value">{{ scheduler_state.last_run.finished_at_display | default(scheduler_state.last_run.finished_at) if scheduler_state.last_run else "-" }}</div>
   </section>
   <section class="stat">
     <div class="stat-label">最近成功</div>
-    <div class="stat-value">{{ scheduler_state.last_success.finished_at if scheduler_state.last_success else "-" }}</div>
+    <div class="stat-value">{{ scheduler_state.last_success.finished_at_display | default(scheduler_state.last_success.finished_at) if scheduler_state.last_success else "-" }}</div>
   </section>
   <section class="stat">
     <div class="stat-label">最近失败</div>
-    <div class="stat-value">{{ scheduler_state.last_failure.finished_at if scheduler_state.last_failure else "-" }}</div>
+    <div class="stat-value">{{ scheduler_state.last_failure.finished_at_display | default(scheduler_state.last_failure.finished_at) if scheduler_state.last_failure else "-" }}</div>
   </section>
   <section class="stat">
     <div class="stat-label">最近日志</div>
-    <div class="stat-value">{{ scheduler_state.last_run.log_path if scheduler_state.last_run else "-" }}</div>
+    <div class="stat-value">{{ scheduler_state.last_run.log_path_display | default(scheduler_state.last_run.log_path) if scheduler_state.last_run else "-" }}</div>
+  </section>
+</div>
+
+<h2>文件系统</h2>
+<div class="grid">
+  <section class="stat">
+    <div class="stat-label">总容量</div>
+    <div class="stat-value">{{ disk_usage.total }}</div>
+  </section>
+  <section class="stat">
+    <div class="stat-label">已用</div>
+    <div class="stat-value">{{ disk_usage.used }}</div>
+  </section>
+  <section class="stat">
+    <div class="stat-label">可用</div>
+    <div class="stat-value">{{ disk_usage.free }}</div>
+  </section>
+  <section class="stat stat-wide">
+    <div class="stat-label">使用率</div>
+    <div class="stat-value">{{ disk_usage.used_percent }}</div>
+    <div class="meter"><div class="meter-fill" style="width: {{ disk_usage.used_percent_value }}%"></div></div>
   </section>
 </div>
 {% endblock %}

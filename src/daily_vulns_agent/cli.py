@@ -23,6 +23,7 @@ from .core import (
     AgentError,
     AppConfig,
     copy_file,
+    format_utc8,
     load_config,
     load_manifest,
     markdown_path_from_manifest,
@@ -242,7 +243,7 @@ def render_reports_index(items: list[dict[str, Any]]) -> str:
         rows.append(
             "<tr>"
             f"<td><a href=\"{escape(item['href'])}\">{escape(item['title'])}</a></td>"
-            f"<td>{escape(item['generated_at'])}</td>"
+            f"<td>{escape(item['generated_at_display'])}</td>"
             f"<td><span class=\"{escape(status_class(status))}\">{escape(status_label(status))}</span></td>"
             "</tr>"
         )
@@ -301,6 +302,7 @@ def rebuild_reports_index(config: AppConfig) -> None:
                     {
                         "title": str(meta.get("title", "")),
                         "generated_at": str(meta.get("generated_at", "")),
+                        "generated_at_display": format_utc8(meta.get("generated_at")),
                         "notify_status": str(meta.get("notify_status", "pending")),
                         "href": f"./{meta_path.parent.name}/",
                     }
@@ -366,7 +368,7 @@ def build_dingtalk_payload(manifest: dict[str, Any], url: str) -> dict[str, Any]
     lines = [
         f"# {manifest['title']}",
         "",
-        f"生成时间：{manifest['generated_at']}",
+        f"生成时间：{format_utc8(manifest['generated_at'])}",
         "",
         f"共 {len(highlights)} 条，以下展示前 {len(shown)} 条：",
         "",

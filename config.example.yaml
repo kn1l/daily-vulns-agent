@@ -23,7 +23,7 @@ generation:
         - "{prompt}"
 
 publish:
-  site_base_url: "http://localhost:8080"
+  site_base_url: "http://localhost:8000"
   runs_dir: runs
   public_dir: public
   reports_path: /reports

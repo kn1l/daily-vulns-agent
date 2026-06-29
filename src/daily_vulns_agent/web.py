@@ -14,10 +14,11 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
 
-from .core import AgentError, AppConfig, load_config, now_iso, read_json, resolve_config_path, write_json
+from .core import AgentError, AppConfig, format_utc8, load_config, now_iso, read_json, resolve_config_path, write_json
 
 ADMIN_PREFIX = "/admin"
 CONFIG_ENV = "DAILY_VULNS_CONFIG"
@@ -43,8 +44,18 @@ def create_app() -> FastAPI:
     def shutdown() -> None:
         state.shutdown()
 
+    register_static_files(app, state)
     register_routes(app, state)
     return app
+
+
+def format_bytes(value: int) -> str:
+    size = float(value)
+    for unit in ("B", "KB", "MB", "GB", "TB", "PB"):
+        if size < 1024 or unit == "PB":
+            return f"{size:.1f} {unit}" if unit != "B" else f"{int(size)} B"
+        size /= 1024
+    return f"{size:.1f} PB"
 
 
 class WebState:
@@ -107,6 +118,17 @@ class WebState:
             "times": [str(item) for item in times],
         }
 
+    def disk_usage(self) -> dict[str, Any]:
+        usage = shutil.disk_usage(self.config.root)
+        used_percent = usage.used / usage.total * 100 if usage.total else 0
+        return {
+            "total": format_bytes(usage.total),
+            "used": format_bytes(usage.used),
+            "free": format_bytes(usage.free),
+            "used_percent": f"{used_percent:.1f}%",
+            "used_percent_value": round(used_percent, 1),
+        }
+
     def scheduler_state(self) -> dict[str, Any]:
         try:
             state = read_json(self.scheduler_state_path)
@@ -118,6 +140,34 @@ class WebState:
         state.setdefault("last_success", None)
         state.setdefault("last_failure", None)
         return state
+
+    def scheduler_log_path_display(self, value: Any) -> str:
+        if not value:
+            return ""
+        path = Path(str(value))
+        if path.is_absolute():
+            try:
+                return str(path.relative_to(self.config.root))
+            except ValueError:
+                return str(Path("state/scheduler_runs") / path.name)
+        return str(path)
+
+    def scheduler_state_display(self) -> dict[str, Any]:
+        state = self.scheduler_state()
+        result = dict(state)
+        result["next_runs_display"] = [format_utc8(value) for value in state.get("next_runs", [])]
+        for key in ("last_run", "last_success", "last_failure"):
+            item = state.get(key)
+            if isinstance(item, dict):
+                item_display = dict(item)
+                if item_display.get("finished_at"):
+                    item_display["finished_at_display"] = format_utc8(item_display["finished_at"])
+                if item_display.get("started_at"):
+                    item_display["started_at_display"] = format_utc8(item_display["started_at"])
+                if item_display.get("log_path"):
+                    item_display["log_path_display"] = self.scheduler_log_path_display(item_display["log_path"])
+                result[key] = item_display
+        return result
 
     def write_scheduler_summary(self, last_run: dict[str, Any] | None = None) -> None:
         existing = self.scheduler_state()
@@ -171,6 +221,11 @@ class WebState:
         logs = sorted(self.scheduler_runs_dir.glob("*.log"), key=lambda path: path.stat().st_mtime, reverse=True)
         for log_path in logs[keep:]:
             log_path.unlink(missing_ok=True)
+
+
+def register_static_files(app: FastAPI, state: WebState) -> None:
+    app.mount("/assets", StaticFiles(directory=state.config.public_dir / "assets", check_dir=False), name="assets")
+    app.mount("/reports", StaticFiles(directory=state.config.public_dir / "reports", html=True, check_dir=False), name="reports")
 
 
 def parse_hhmm(value: str) -> tuple[int, int]:
@@ -294,7 +349,7 @@ def require_login(request: Request) -> RedirectResponse | None:
 def register_routes(app: FastAPI, state: WebState) -> None:
     @app.get("/", include_in_schema=False)
     def root() -> RedirectResponse:
-        return redirect(f"{ADMIN_PREFIX}/")
+        return redirect("/reports/")
 
     @app.get(f"{ADMIN_PREFIX}/", response_class=HTMLResponse)
     def dashboard(request: Request) -> Any:
@@ -302,7 +357,15 @@ def register_routes(app: FastAPI, state: WebState) -> None:
             return login_redirect
         state.reload_config()
         schedule = state.schedule_config()
-        return render(state, request, "admin/dashboard.html", title="仪表盘", schedule=schedule, scheduler_state=state.scheduler_state())
+        return render(
+            state,
+            request,
+            "admin/dashboard.html",
+            title="仪表盘",
+            schedule=schedule,
+            scheduler_state=state.scheduler_state_display(),
+            disk_usage=state.disk_usage(),
+        )
 
     @app.get(f"{ADMIN_PREFIX}/login", response_class=HTMLResponse)
     def login_page(request: Request) -> HTMLResponse:

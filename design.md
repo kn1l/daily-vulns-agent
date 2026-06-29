@@ -23,23 +23,16 @@ FastAPI Web
   -> 调度配置
   -> APScheduler 定时 subprocess 调 CLI run
   -> 仪表盘展示调度状态
-
-Nginx
   -> /reports/ 托管 public/reports/
-  -> /admin/ 反代 FastAPI 管理后台
+  -> /assets/ 托管 public/assets/
 ```
 
 ## 目录结构
 
 ```text
-Dockerfile
-docker-compose.yml
 config.example.yaml
 config.yaml
 requirements.txt
-deploy/
-  nginx/
-    default.conf
 prompts/
   daily_report.md
 skills/
@@ -183,6 +176,7 @@ CLI 使用 `argparse`。
 - 显示标题链接、生成时间、推送状态。
 - 按 `generated_at` 倒序。
 - 和单篇报告共用 CSS。
+- 页面和通知中的时间统一转换为 UTC+8 展示。
 
 ## notify
 
@@ -239,7 +233,7 @@ CLI 使用 `argparse`。
 
 ```yaml
 generation:
-  agent: claude
+  agent: codex
   prompt_file: prompts/daily_report.md
   timeout_seconds: 3600
   agents:
@@ -251,6 +245,7 @@ generation:
         - claude
         - --print
         - "{prompt}"
+        - --dangerously-skip-permissions
     codex:
       base_url: ""
       api_key: ""
@@ -262,7 +257,7 @@ generation:
         - "{prompt}"
 
 publish:
-  site_base_url: "http://localhost:8080"
+  site_base_url: "http://localhost:8000"
   runs_dir: runs
   public_dir: public
   reports_path: /reports
@@ -366,45 +361,48 @@ state/scheduler_runs/<timestamp>.log
 
 ## 部署
 
-第一版部署方式改为 Docker Compose + Nginx。
+第一版推荐部署方式为宿主机直接运行 FastAPI Web + APScheduler。
 
 服务：
 
-- `app`：FastAPI + APScheduler，运行 `daily_vulns_agent.web:app`，启动时自动初始化 `state/`、`state/scheduler_runs/`、`runs/`、`public/reports/` 和 `public/assets/`。
-- `nginx`：对外提供静态报告和反代管理后台。
+- `web`：FastAPI + APScheduler，运行 `daily_vulns_agent.web:app`，启动时自动初始化 `state/`、`state/scheduler_runs/`、`runs/`、`public/reports/` 和 `public/assets/`。
 
 对外路径：
 
-- `/reports/` 静态托管 `public/reports/`
-- `/assets/` 静态托管 `public/assets/`
-- `/admin/` 反代 FastAPI 管理后台
+- `/reports/` 由 FastAPI 静态托管 `public/reports/`
+- `/assets/` 由 FastAPI 静态托管 `public/assets/`
+- `/admin/` 由 FastAPI 提供管理后台
 
-持久化挂载：
+宿主机 Web 读写：
 
-- `./config.yaml:/app/config.yaml`
-- `./prompts:/app/prompts`
-- `./skills:/app/skills`
-- `./runs:/app/runs`
-- `./public:/app/public`
-- `./state:/app/state`
+- `./config.yaml`
+- `./prompts`
+- `./skills`
+- `./runs`
+- `./public`
+- `./state`
 
-`runs/`、`public/`、`state/` 是运行产物目录，可以写入 `.gitignore`；应用和容器启动命令会自动创建所需子目录。
+`runs/`、`public/`、`state/` 是运行产物目录，可以写入 `.gitignore`；应用启动时会自动创建所需子目录。
 
-宿主机 CLI、容器内 CLI、FastAPI Web 调度读写同一批挂载目录。`config.yaml` 中的相对路径在宿主机相对于项目根目录解析，在容器内相对于 `/app` 解析；由于挂载结构一致，两者兼容。
+宿主机 CLI 和 FastAPI Web 调度读写同一批宿主机目录。`config.yaml` 中的相对路径相对于项目根目录解析。Web 调度调用宿主机上的 Claude/Codex CLI，因此可以复用宿主机已安装、登录和配置好的 agent CLI。
 
-当前 Dockerfile 在 Python 运行环境中内置 Node.js 和 Codex CLI，可直接支持容器内 `codex` agent 调度；如果要使用 Claude CLI，需要额外扩展镜像安装 Claude Code。
-
-启动：
+宿主机 Web 启动：
 
 ```bash
-docker compose up -d --build
+PYTHONPATH=src uv run uvicorn daily_vulns_agent.web:app --host 127.0.0.1 --port 8000
+```
+
+如果要让 FastAPI 直接对外提供访问：
+
+```bash
+PYTHONPATH=src uv run uvicorn daily_vulns_agent.web:app --host 0.0.0.0 --port 8000
 ```
 
 默认本机端口：
 
 ```text
-http://localhost:8080/reports/
-http://localhost:8080/admin/
+http://localhost:8000/reports/
+http://localhost:8000/admin/
 ```
 
 API 可以公网开放，但必须登录鉴权。不强制校验 HTTPS。
