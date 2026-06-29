@@ -119,7 +119,7 @@ codex --version
 
 宿主机执行 CLI 时，依赖宿主机上的 `claude` / `codex`。
 
-Docker Web 调度执行 `run` 时，依赖容器内的 `claude` / `codex`。当前 Dockerfile 只安装 Python 依赖，没有内置 Claude/Codex CLI；如果要让 Web 定时任务在容器内真实生成日报，需要额外扩展镜像或把生成步骤改为宿主机执行。
+Docker Web 调度执行 `run` 时，依赖容器内的模型 CLI。当前 Dockerfile 已内置 Node.js 和 Codex CLI，可直接使用 `codex` agent；如果要在容器内使用 Claude CLI，需要额外扩展镜像安装 Claude Code。
 
 如果你先只测试 `publish` / `notify`，不需要 Claude/Codex CLI。
 

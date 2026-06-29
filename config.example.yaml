@@ -1,5 +1,5 @@
 generation:
-  agent: claude
+  agent: codex
   prompt_file: prompts/daily_report.md
   timeout_seconds: 3600
   agents:

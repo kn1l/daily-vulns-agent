@@ -392,7 +392,7 @@ state/scheduler_runs/<timestamp>.log
 
 宿主机 CLI、容器内 CLI、FastAPI Web 调度读写同一批挂载目录。`config.yaml` 中的相对路径在宿主机相对于项目根目录解析，在容器内相对于 `/app` 解析；由于挂载结构一致，两者兼容。
 
-当前 Dockerfile 只安装 Python 依赖并复制项目文件，不内置 Claude/Codex CLI。Web 定时任务如果要在容器内真实执行 `generate` / `run`，需要额外扩展镜像安装对应模型 CLI，或把生成步骤改为宿主机执行。
+当前 Dockerfile 在 Python 运行环境中内置 Node.js 和 Codex CLI，可直接支持容器内 `codex` agent 调度；如果要使用 Claude CLI，需要额外扩展镜像安装 Claude Code。
 
 启动：
 
