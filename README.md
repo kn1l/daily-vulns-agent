@@ -21,7 +21,7 @@ prompts/                 # 日报生成 prompt
 skills/                  # 项目内日报生成 skill
 runs/                    # 每次运行的内部产物
 public/                  # FastAPI 对外托管的静态报告和资源
-state/                   # Web 调度状态和调度日志
+scripts/                 # 部署辅助脚本
 src/daily_vulns_agent/   # Python 源码
 ```
 
@@ -107,30 +107,54 @@ PYTHONPATH=src uv run python -m daily_vulns_agent.cli notify --run-dir runs/2026
 - `/assets/`：静态资源
 - 定时调度：到点执行配置里的 `web.run_command`
 
-启动 tmux：
+启动 Web：
 
 ```bash
-tmux new -s daily-vulns-web
+./scripts/start-web.sh
 ```
 
-本机访问或前面另有反代时，可以只监听本机回环地址：
+脚本默认创建 `daily-vulns-web` tmux 会话，并监听 `0.0.0.0:8000`。如果要改端口：
 
 ```bash
-cd /path/to/daily-vulns-agent
-PYTHONPATH=src uv run uvicorn daily_vulns_agent.web:app --host 127.0.0.1 --port 8000
+DAILY_VULNS_PORT=8080 ./scripts/start-web.sh
 ```
 
-如果要让 FastAPI 直接对外提供访问，监听 `0.0.0.0`：
+如果要监听 80 端口：
 
 ```bash
-cd /path/to/daily-vulns-agent
-PYTHONPATH=src uv run uvicorn daily_vulns_agent.web:app --host 0.0.0.0 --port 8000
+DAILY_VULNS_PORT=80 ./scripts/start-web.sh
 ```
 
-按 `Ctrl-b d` 退出 tmux 会话但保持 Web 运行。重新进入：
+80 是特权端口，普通用户可能没有权限直接监听。推荐优先使用 8000/8080；如果必须使用 80，可以用系统能力授权、端口转发，或用反代把 80 转到应用端口。
+
+如果前面还有反代，想只监听本机回环地址：
+
+```bash
+DAILY_VULNS_HOST=127.0.0.1 DAILY_VULNS_PORT=8000 ./scripts/start-web.sh
+```
+
+重新进入 tmux 会话：
 
 ```bash
 tmux attach -t daily-vulns-web
+```
+
+如果服务器重启后需要自动恢复，可以加入当前用户的 crontab：
+
+```bash
+crontab -e
+```
+
+添加一行，路径改成实际项目路径：
+
+```cron
+@reboot /path/to/daily-vulns-agent/scripts/start-web.sh >> /path/to/daily-vulns-agent/state/web-start.log 2>&1
+```
+
+如果要指定监听地址或端口：
+
+```cron
+@reboot DAILY_VULNS_HOST=0.0.0.0 DAILY_VULNS_PORT=8000 /path/to/daily-vulns-agent/scripts/start-web.sh >> /path/to/daily-vulns-agent/state/web-start.log 2>&1
 ```
 
 默认访问：
@@ -138,6 +162,13 @@ tmux attach -t daily-vulns-web
 ```text
 http://localhost:8000/reports/
 http://localhost:8000/admin/
+```
+
+如果监听 80 端口：
+
+```text
+http://localhost/reports/
+http://localhost/admin/
 ```
 
 默认账号密码来自 `config.yaml`：

@@ -61,6 +61,8 @@ state/
   scheduler_state.json
   scheduler_runs/
     2026-06-25_090000.log
+scripts/
+  start-web.sh
 src/
   daily_vulns_agent/
     core.py
@@ -389,13 +391,15 @@ state/scheduler_runs/<timestamp>.log
 宿主机 Web 启动：
 
 ```bash
-PYTHONPATH=src uv run uvicorn daily_vulns_agent.web:app --host 127.0.0.1 --port 8000
+./scripts/start-web.sh
 ```
 
-如果要让 FastAPI 直接对外提供访问：
+`start-web.sh` 默认创建 `daily-vulns-web` tmux 会话，监听 `0.0.0.0:8000`。可以通过 `DAILY_VULNS_HOST` 和 `DAILY_VULNS_PORT` 覆盖监听地址和端口；如果监听 80 端口，需要系统允许当前用户绑定特权端口，或通过端口转发/反代转到应用端口。
 
-```bash
-PYTHONPATH=src uv run uvicorn daily_vulns_agent.web:app --host 0.0.0.0 --port 8000
+服务器重启自动恢复可以使用当前用户 crontab：
+
+```cron
+@reboot /path/to/daily-vulns-agent/scripts/start-web.sh >> /path/to/daily-vulns-agent/state/web-start.log 2>&1
 ```
 
 默认本机端口：
@@ -403,6 +407,13 @@ PYTHONPATH=src uv run uvicorn daily_vulns_agent.web:app --host 0.0.0.0 --port 80
 ```text
 http://localhost:8000/reports/
 http://localhost:8000/admin/
+```
+
+监听 80 端口时：
+
+```text
+http://localhost/reports/
+http://localhost/admin/
 ```
 
 API 可以公网开放，但必须登录鉴权。不强制校验 HTTPS。
