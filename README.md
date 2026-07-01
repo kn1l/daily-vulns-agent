@@ -105,7 +105,7 @@ PYTHONPATH=src uv run python -m daily_vulns_agent.cli notify --run-dir runs/2026
 - `/admin/`：管理后台
 - `/reports/`：静态报告列表和单篇报告
 - `/assets/`：静态资源
-- 定时调度：到点执行配置里的 `web.run_command`
+- 定时调度：服务运行时，到点执行配置里的 `web.run_command`
 
 启动 Web：
 

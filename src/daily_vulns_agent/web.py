@@ -134,8 +134,8 @@ class WebState:
             state = read_json(self.scheduler_state_path)
         except AgentError:
             state = {}
-        state.setdefault("enabled", self.schedule_config()["enabled"])
-        state.setdefault("next_runs", [])
+        state["enabled"] = self.schedule_config()["enabled"]
+        state["next_runs"] = [job.next_run_time.isoformat() for job in self.scheduler.get_jobs() if job.next_run_time]
         state.setdefault("last_run", None)
         state.setdefault("last_success", None)
         state.setdefault("last_failure", None)
